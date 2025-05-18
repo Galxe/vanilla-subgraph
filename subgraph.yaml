@@ -1,0 +1,29 @@
+specVersion: 0.0.5
+description: Track inflow/outflow for GRVT bridge
+repository: https://github.com/galxe/grvt-subgraph
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: Bridgehub
+    network: mainnet
+    source:
+      address: "0xD7f9f54194C633F36CCD5F3da84ad4a1c38cB2cB"
+      abi: Bridgehub
+      startBlock: 20019913
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - DayData
+        - GlobalData
+      abis:
+        - name: Bridgehub
+          file: ./abis/Bridgehub.json
+      eventHandlers:
+        - event: BridgehubDepositInitiated(indexed uint256,indexed bytes32,indexed address,address,address,uint256)
+          handler: handleDepositBridgehub
+        - event: WithdrawalFinalizedSharedBridge(indexed uint256,indexed address,indexed address,uint256)
+          handler: handleWithdrawalBridgehub
+      file: ./src/bridgehub.ts
