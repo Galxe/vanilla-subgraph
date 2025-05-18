@@ -3,10 +3,10 @@ import { BridgehubDepositInitiated, WithdrawalFinalizedSharedBridge } from "../g
 import { DayData, GlobalData, UserStats } from "../generated/schema"
 
 // constants
-const CHAIN_ID_TARGET = 325
+const CHAIN_ID_TARGET = 56
 const USDT_ADDRESS = "0xdac17f958d2ee523a2206206994597c13d831ec7".toLowerCase()
 
-// 用于追踪每日用户
+// Track daily unique users
 let dailyUsers = new Set<string>()
 
 function getOrCreateUserStats(address: string): UserStats {
@@ -47,7 +47,7 @@ function recordTransaction(
   amount: BigDecimal,
   timestamp: BigInt
 ): void {
-  // 更新用户交易额
+  // Update user transaction volume
   let userStats = getOrCreateUserStats(userAddress)
   userStats.volume = userStats.volume.plus(amount)
   userStats.save()
@@ -55,7 +55,7 @@ function recordTransaction(
   let dayData = getOrCreateDayData(timestamp)
   let global = getOrCreateGlobalData()
   
-  // 更新每日数据
+  // Update daily data
   if (!dailyUsers.has(userAddress)) {
     dayData.uniqueUsers = dayData.uniqueUsers.plus(BigInt.fromI32(1))
     dailyUsers.add(userAddress)
@@ -64,11 +64,11 @@ function recordTransaction(
   dayData.volume = dayData.volume.plus(amount)
   dayData.save()
 
-  // 更新全局数据
+  // Update global data
   global.totalTransactions = global.totalTransactions.plus(BigInt.fromI32(1))
   global.totalVolume = global.totalVolume.plus(amount)
   
-  // 检查是否是新的全局用户
+  // Check if this is a new global user
   let userKey = "user:" + userAddress
   let existingUser = GlobalData.load(userKey)
   if (existingUser == null) {
@@ -80,7 +80,7 @@ function recordTransaction(
   global.save()
 }
 
-// 每天重置每日用户集合
+// Reset daily users set at the start of each day
 export function handleBlock(block: ethereum.Block): void {
   if (block.timestamp.toI32() % 86400 == 0) {
     dailyUsers.clear()
