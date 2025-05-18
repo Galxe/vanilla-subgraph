@@ -10,7 +10,7 @@ dataSources:
     source:
       address: "0x994b9a6c85e89c42ea7cc14d42afdf2ea68b72f1"
       abi: Bridgehub
-      startBlock: 1344046
+      startBlock: 48548860
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
