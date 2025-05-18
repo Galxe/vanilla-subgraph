@@ -6,11 +6,11 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: Bridgehub
-    network: mainnet
+    network: bsc
     source:
-      address: "0xD7f9f54194C633F36CCD5F3da84ad4a1c38cB2cB"
+      address: "0x994b9a6c85e89c42ea7cc14d42afdf2ea68b72f1"
       abi: Bridgehub
-      startBlock: 20019913
+      startBlock: 1344046
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -18,6 +18,7 @@ dataSources:
       entities:
         - DayData
         - GlobalData
+        - UserStats
       abis:
         - name: Bridgehub
           file: ./abis/Bridgehub.json

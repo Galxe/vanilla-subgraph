@@ -1,19 +1,19 @@
 type UserStats @entity(immutable: false) {
-  id: ID!                    # 用户地址
-  volume: BigDecimal!        # 用户总交易额
+  id: ID!                    # User address
+  volume: BigDecimal!        # Total transaction volume
 }
 
 type GlobalData @entity(immutable: false) {
   id: ID!
-  uniqueUsers: BigInt!       # 唯一用户数
-  totalTransactions: BigInt! # 总交互数
-  totalVolume: BigDecimal!   # 总交易额
+  uniqueUsers: BigInt!       # Number of unique users
+  totalTransactions: BigInt! # Total number of transactions
+  totalVolume: BigDecimal!   # Total transaction volume
 }
 
 type DayData @entity(immutable: false) {
   id: ID!
-  uniqueUsers: BigInt!       # 每日唯一用户数
-  transactions: BigInt!      # 每日交互数
-  volume: BigDecimal!        # 每日交易额
+  uniqueUsers: BigInt!       # Daily unique users
+  transactions: BigInt!      # Daily transactions
+  volume: BigDecimal!        # Daily transaction volume
   timestamp: BigInt!
 }
