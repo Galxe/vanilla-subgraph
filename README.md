@@ -43,39 +43,21 @@ graph deploy
 
 After deployment, you can query the subgraph using GraphQL. Here are some example queries:
 
-1. **获取合约全局统计**
+1. **Get Contract Global Statistics**
 ```graphql
 {
   contractStats(id: "0x994b9a6c85e89c42ea7cc14d42afdf2ea68b72f1") {
-    totalAddresses    # 累计交互地址数
-    totalTxCount     # 累计交易笔数
-    totalVolume      # 累计交易金额
-    updatedAt        # 最后更新块时间
+    totalAddresses    # Total number of unique addresses
+    totalTxCount     # Total number of transactions
+    totalVolume      # Total transaction volume
+    updatedAt        # Last update timestamp
   }
 }
 ```
 
-2. **获取每日统计数据**
+2. **Get Daily Address Statistics**
 ```graphql
-# 获取最近30天的数据
-{
-  dailyStats(
-    where: { contract: "0x994b9a6c85e89c42ea7cc14d42afdf2ea68b72f1" }
-    orderBy: date
-    orderDirection: desc
-    first: 30
-  ) {
-    id
-    date
-    txCount    # 每日交易笔数
-    volume     # 每日交易金额
-  }
-}
-```
-
-3. **获取地址每日统计**
-```graphql
-# 获取特定地址的每日统计
+# Get statistics for a specific address
 {
   dailyAddressStats(
     where: { 
@@ -87,12 +69,12 @@ After deployment, you can query the subgraph using GraphQL. Here are some exampl
     first: 30
   ) {
     date
-    txCount    # 每日交易笔数
-    volume     # 每日交易金额
+    txCount    # Daily transaction count
+    volume     # Daily transaction volume
   }
 }
 
-# 获取某天交易量最大的前10个地址
+# Get top addresses by volume for a specific day
 {
   dailyAddressStats(
     where: { 
@@ -109,7 +91,7 @@ After deployment, you can query the subgraph using GraphQL. Here are some exampl
   }
 }
 
-# 获取某天交易次数最多的前10个地址
+# Get top addresses by transaction count for a specific day
 {
   dailyAddressStats(
     where: { 
@@ -127,29 +109,37 @@ After deployment, you can query the subgraph using GraphQL. Here are some exampl
 }
 ```
 
-### 数据说明
+### Data Structure
 
-1. **ContractStats (合约全局统计)**
-   - `id`: 合约地址
-   - `totalAddresses`: 累计交互地址数
-   - `totalTxCount`: 累计交易笔数
-   - `totalVolume`: 累计交易金额
-   - `updatedAt`: 最后更新块时间
+1. **ContractStats (Global Statistics)**
+   - `id`: Contract address
+   - `totalAddresses`: Total number of unique addresses
+   - `totalTxCount`: Total number of transactions
+   - `totalVolume`: Total transaction volume
+   - `updatedAt`: Last update timestamp
 
-2. **DailyStats (每日统计)**
-   - `id`: 格式为 "{contract}-{yyyyMMdd}"
-   - `contract`: 合约地址
-   - `date`: 日期 (YYYYMMDD)
-   - `txCount`: 每日交易笔数
-   - `volume`: 每日交易金额
+2. **DailyAddressStats (Daily Address Statistics)**
+   - `id`: Format: "{contract}-{address}-{yyyyMMdd}"
+   - `contract`: Contract address
+   - `address`: User address
+   - `date`: Date (YYYYMMDD)
+   - `txCount`: Daily transaction count
+   - `volume`: Daily transaction volume
 
-3. **DailyAddressStats (地址每日统计)**
-   - `id`: 格式为 "{contract}-{address}-{yyyyMMdd}"
-   - `contract`: 合约地址
-   - `address`: 用户地址
-   - `date`: 日期 (YYYYMMDD)
-   - `txCount`: 每日交易笔数
-   - `volume`: 每日交易金额
+3. **AddressTracker (Address Tracking)**
+   - `id`: Format: "{contract}-{address}"
+   - `contract`: Contract address
+   - `address`: User address
+
+### Event Handlers
+
+The subgraph tracks the following events:
+- `BuyTicket`: When a user buys a ticket
+- `CancelTicket`: When a user cancels a ticket
+- `CreateOrder`: When a user creates an order
+- `DepositFund`: When a user deposits funds
+- `WithdrawFund`: When a user withdraws funds
+- `SettleOrder`: When an order is settled
 
 ### Updating the Subgraph
 
