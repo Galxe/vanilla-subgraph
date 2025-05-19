@@ -43,50 +43,113 @@ graph deploy
 
 After deployment, you can query the subgraph using GraphQL. Here are some example queries:
 
-1. **Get Global Statistics**
+1. **获取合约全局统计**
 ```graphql
 {
-  globalData(id: "singleton") {
-    uniqueUsers
-    totalTransactions
-    totalVolume
+  contractStats(id: "0x994b9a6c85e89c42ea7cc14d42afdf2ea68b72f1") {
+    totalAddresses    # 累计交互地址数
+    totalTxCount     # 累计交易笔数
+    totalVolume      # 累计交易金额
+    updatedAt        # 最后更新块时间
   }
 }
 ```
 
-2. **Get Daily Statistics**
+2. **获取每日统计数据**
 ```graphql
+# 获取最近30天的数据
 {
-  dayDatas(orderBy: timestamp, orderDirection: desc, first: 30) {
+  dailyStats(
+    where: { contract: "0x994b9a6c85e89c42ea7cc14d42afdf2ea68b72f1" }
+    orderBy: date
+    orderDirection: desc
+    first: 30
+  ) {
     id
-    timestamp
-    uniqueUsers
-    transactions
+    date
+    txCount    # 每日交易笔数
+    volume     # 每日交易金额
+  }
+}
+```
+
+3. **获取地址每日统计**
+```graphql
+# 获取特定地址的每日统计
+{
+  dailyAddressStats(
+    where: { 
+      contract: "0x994b9a6c85e89c42ea7cc14d42afdf2ea68b72f1",
+      address: "0x..."
+    }
+    orderBy: date
+    orderDirection: desc
+    first: 30
+  ) {
+    date
+    txCount    # 每日交易笔数
+    volume     # 每日交易金额
+  }
+}
+
+# 获取某天交易量最大的前10个地址
+{
+  dailyAddressStats(
+    where: { 
+      contract: "0x994b9a6c85e89c42ea7cc14d42afdf2ea68b72f1",
+      date: 20240301
+    }
+    orderBy: volume
+    orderDirection: desc
+    first: 10
+  ) {
+    address
+    txCount
+    volume
+  }
+}
+
+# 获取某天交易次数最多的前10个地址
+{
+  dailyAddressStats(
+    where: { 
+      contract: "0x994b9a6c85e89c42ea7cc14d42afdf2ea68b72f1",
+      date: 20240301
+    }
+    orderBy: txCount
+    orderDirection: desc
+    first: 10
+  ) {
+    address
+    txCount
     volume
   }
 }
 ```
 
-3. **Get User Statistics**
-```graphql
-{
-  userStats(where: { id: "0x..." }) {
-    id
-    volume
-  }
-}
-```
+### 数据说明
 
-4. **Get Top Users by Volume**
-```graphql
-{
-  userStats(orderBy: volume, orderDirection: desc, first: 10) {
-    id
-    volume
-  }
-}
-```
+1. **ContractStats (合约全局统计)**
+   - `id`: 合约地址
+   - `totalAddresses`: 累计交互地址数
+   - `totalTxCount`: 累计交易笔数
+   - `totalVolume`: 累计交易金额
+   - `updatedAt`: 最后更新块时间
 
+2. **DailyStats (每日统计)**
+   - `id`: 格式为 "{contract}-{yyyyMMdd}"
+   - `contract`: 合约地址
+   - `date`: 日期 (YYYYMMDD)
+   - `txCount`: 每日交易笔数
+   - `volume`: 每日交易金额
+
+3. **DailyAddressStats (地址每日统计)**
+   - `id`: 格式为 "{contract}-{address}-{yyyyMMdd}"
+   - `contract`: 合约地址
+   - `address`: 用户地址
+   - `date`: 日期 (YYYYMMDD)
+   - `txCount`: 每日交易笔数
+   - `volume`: 每日交易金额
 
 ### Updating the Subgraph
 

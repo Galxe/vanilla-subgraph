@@ -1,19 +1,25 @@
-type UserStats @entity(immutable: false) {
-  id: ID!                    # User address
-  volume: BigDecimal!        # Total transaction volume
+# 全量指标
+type ContractStats @entity(immutable: false) {
+  id: ID!                         # 合约地址
+  totalAddresses: BigInt!        # 累计交互地址数
+  totalTxCount: BigInt!          # 累计交易笔数
+  totalVolume: BigDecimal!       # 累计交易金额
+  updatedAt: BigInt!             # 最后更新块时间
 }
 
-type GlobalData @entity(immutable: false) {
+# 按日期过滤
+type DailyAddressStats @entity(immutable: false) {
   id: ID!
-  uniqueUsers: BigInt!       # Number of unique users
-  totalTransactions: BigInt! # Total number of transactions
-  totalVolume: BigDecimal!   # Total transaction volume
+  contract: String!
+  address: String! @index
+  date: BigInt!   @index
+  txCount: BigInt!
+  volume: BigDecimal!
 }
 
-type DayData @entity(immutable: false) {
-  id: ID!
-  uniqueUsers: BigInt!       # Daily unique users
-  transactions: BigInt!      # Daily transactions
-  volume: BigDecimal!        # Daily transaction volume
-  timestamp: BigInt!
+# 地址跟踪
+type AddressTracker @entity(immutable: false) {
+  id: ID!  # 格式: "{contract}-{address}"
+  contract: String!
+  address: String!
 }
