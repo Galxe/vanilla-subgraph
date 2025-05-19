@@ -1,117 +1,152 @@
 import { BigDecimal, BigInt, Bytes, ethereum, Address } from "@graphprotocol/graph-ts"
-import { BridgehubDepositInitiated, WithdrawalFinalizedSharedBridge } from "../generated/Bridgehub/Bridgehub"
-import { DayData, GlobalData, UserStats } from "../generated/schema"
+import { 
+  BuyTicket,
+  CancelTicket,
+  CreateOrder,
+  DepositFund,
+  WithdrawFund,
+  SettleOrder
+} from "../generated/Bridgehub/Bridgehub"
+import { ContractStats, DailyAddressStats, AddressTracker } from "../generated/schema"
 
-// constants
-const CHAIN_ID_TARGET = 56
-const USDT_ADDRESS = "0xdac17f958d2ee523a2206206994597c13d831ec7".toLowerCase()
+// Constants
+const CONTRACT_ADDRESS = "0x994b9a6c85e89c42ea7cc14d42afdf2ea68b72f1"
 
-// Track daily unique users
-let dailyUsers = new Set<string>()
-
-function getOrCreateUserStats(address: string): UserStats {
-  let userStats = UserStats.load(address)
-  if (userStats == null) {
-    userStats = new UserStats(address)
-    userStats.volume = BigDecimal.zero()
+// Get or create contract statistics
+function getOrCreateContractStats(): ContractStats {
+  let stats = ContractStats.load(CONTRACT_ADDRESS)
+  if (stats == null) {
+    stats = new ContractStats(CONTRACT_ADDRESS)
+    stats.totalAddresses = BigInt.zero()
+    stats.totalTxCount = BigInt.zero()
+    stats.totalVolume = BigDecimal.zero()
+    stats.updatedAt = BigInt.zero()
   }
-  return userStats!
+  return stats
 }
 
-function getOrCreateDayData(timestamp: BigInt): DayData {
-  let dayID = (timestamp.toI32() / 86400).toString()
-  let dayData = DayData.load(dayID)
-  if (dayData == null) {
-    dayData = new DayData(dayID)
-    dayData.uniqueUsers = BigInt.zero()
-    dayData.transactions = BigInt.zero()
-    dayData.volume = BigDecimal.zero()
-    dayData.timestamp = BigInt.fromI32((timestamp.toI32() / 86400) * 86400)
+// Get or create daily address statistics
+function getOrCreateDailyAddressStats(
+  address: string,
+  date: BigInt
+): DailyAddressStats {
+  let id = `${CONTRACT_ADDRESS}-${address}-${date.toString()}`
+  let stats = DailyAddressStats.load(id)
+  if (stats == null) {
+    stats = new DailyAddressStats(id)
+    stats.contract = CONTRACT_ADDRESS
+    stats.address = address
+    stats.date = date
+    stats.txCount = BigInt.zero()
+    stats.volume = BigDecimal.zero()
   }
-  return dayData!
+  return stats
 }
 
-function getOrCreateGlobalData(): GlobalData {
-  let global = GlobalData.load("singleton")
-  if (global == null) {
-    global = new GlobalData("singleton")
-    global.uniqueUsers = BigInt.zero()
-    global.totalTransactions = BigInt.zero()
-    global.totalVolume = BigDecimal.zero()
-  }
-  return global!
+// Get day timestamp
+function getDayTimestamp(timestamp: BigInt): BigInt {
+  return BigInt.fromI32((timestamp.toI32() / 86400) * 86400)
 }
 
+// Record transaction
 function recordTransaction(
-  userAddress: string,
+  address: string,
   amount: BigDecimal,
   timestamp: BigInt
 ): void {
-  // Update user transaction volume
-  let userStats = getOrCreateUserStats(userAddress)
-  userStats.volume = userStats.volume.plus(amount)
-  userStats.save()
+  // Update contract global statistics
+  let contractStats = getOrCreateContractStats()
+  contractStats.totalTxCount = contractStats.totalTxCount.plus(BigInt.fromI32(1))
+  contractStats.totalVolume = contractStats.totalVolume.plus(amount)
+  contractStats.updatedAt = timestamp
 
-  let dayData = getOrCreateDayData(timestamp)
-  let global = getOrCreateGlobalData()
-  
-  // Update daily data
-  if (!dailyUsers.has(userAddress)) {
-    dayData.uniqueUsers = dayData.uniqueUsers.plus(BigInt.fromI32(1))
-    dailyUsers.add(userAddress)
+  // Check if this is a new address
+  let addressKey = `${CONTRACT_ADDRESS}-${address}`
+  let existingAddress = AddressTracker.load(addressKey)
+  if (existingAddress == null) {
+    contractStats.totalAddresses = contractStats.totalAddresses.plus(BigInt.fromI32(1))
+    let newAddress = new AddressTracker(addressKey)
+    newAddress.contract = CONTRACT_ADDRESS
+    newAddress.address = address
+    newAddress.save()
   }
-  dayData.transactions = dayData.transactions.plus(BigInt.fromI32(1))
-  dayData.volume = dayData.volume.plus(amount)
-  dayData.save()
+  contractStats.save()
 
-  // Update global data
-  global.totalTransactions = global.totalTransactions.plus(BigInt.fromI32(1))
-  global.totalVolume = global.totalVolume.plus(amount)
-  
-  // Check if this is a new global user
-  let userKey = "user:" + userAddress
-  let existingUser = GlobalData.load(userKey)
-  if (existingUser == null) {
-    global.uniqueUsers = global.uniqueUsers.plus(BigInt.fromI32(1))
-    let newUser = new GlobalData(userKey)
-    newUser.save()
-  }
-  
-  global.save()
+  // Update daily address statistics
+  let date = getDayTimestamp(timestamp)
+  let dailyStats = getOrCreateDailyAddressStats(address, date)
+  dailyStats.txCount = dailyStats.txCount.plus(BigInt.fromI32(1))
+  dailyStats.volume = dailyStats.volume.plus(amount)
+  dailyStats.save()
 }
 
-// Reset daily users set at the start of each day
-export function handleBlock(block: ethereum.Block): void {
-  if (block.timestamp.toI32() % 86400 == 0) {
-    dailyUsers.clear()
-  }
-}
-
-export function handleDepositBridgehub(event: BridgehubDepositInitiated): void {
-  if (event.params.chainId.toI32() != CHAIN_ID_TARGET) {
-    return
-  }
-
-  let amount = event.params.amount.toBigDecimal().div(BigDecimal.fromString('1000000'))
+// Handle buy ticket event
+export function handleBuyTicket(event: BuyTicket): void {
+  let amount = event.params.amount.toBigDecimal()
+  amount = amount.div(BigDecimal.fromString('1000000000000000000'))
+  
   recordTransaction(
-    event.params.from.toHexString(),
+    event.params.account.toHexString(),
     amount,
     event.block.timestamp
   )
 }
 
-export function handleWithdrawalBridgehub(event: WithdrawalFinalizedSharedBridge): void {
-  if (event.params.chainId.toI32() != CHAIN_ID_TARGET) {
-    return
-  }
+// Handle cancel ticket event
+export function handleCancelTicket(event: CancelTicket): void {
+  let amount = event.params.amount.toBigDecimal()
+  amount = amount.div(BigDecimal.fromString('1000000000000000000'))
   
-  if (event.params.l1Token.toHexString().toLowerCase() != USDT_ADDRESS) {
-    return
-  }
-  
-  let amount = event.params.amount.toBigDecimal().div(BigDecimal.fromString('1000000'))
   recordTransaction(
-    event.params.to.toHexString(),
+    event.params.account.toHexString(),
+    amount,
+    event.block.timestamp
+  )
+}
+
+// Handle create order event
+export function handleCreateOrder(event: CreateOrder): void {
+  let amount = event.params.params.amount.toBigDecimal()
+  amount = amount.div(BigDecimal.fromString('1000000000000000000'))
+  
+  recordTransaction(
+    event.params.account.toHexString(),
+    amount,
+    event.block.timestamp
+  )
+}
+
+// Handle deposit fund event
+export function handleDepositFund(event: DepositFund): void {
+  let amount = event.params.amount.toBigDecimal()
+  amount = amount.div(BigDecimal.fromString('1000000000000000000'))
+  
+  recordTransaction(
+    event.params.account.toHexString(),
+    amount,
+    event.block.timestamp
+  )
+}
+
+// Handle withdraw fund event
+export function handleWithdrawFund(event: WithdrawFund): void {
+  let amount = event.params.amount.toBigDecimal()
+  amount = amount.div(BigDecimal.fromString('1000000000000000000'))
+  
+  recordTransaction(
+    event.params.account.toHexString(),
+    amount,
+    event.block.timestamp
+  )
+}
+
+// Handle settle order event
+export function handleSettleOrder(event: SettleOrder): void {
+  let amount = event.params.revenue.toBigDecimal()
+  amount = amount.div(BigDecimal.fromString('1000000000000000000'))
+  
+  recordTransaction(
+    event.params.account.toHexString(),
     amount,
     event.block.timestamp
   )

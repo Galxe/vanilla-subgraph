@@ -1,6 +1,7 @@
 specVersion: 0.0.5
-description: Track inflow/outflow for GRVT bridge
-repository: https://github.com/galxe/grvt-subgraph
+description: Track inflow/outflow for vanilla
+repository: https://github.com/galxe/vanilla-subgraph
+
 schema:
   file: ./schema.graphql
 dataSources:
@@ -16,15 +17,23 @@ dataSources:
       apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
-        - DayData
-        - GlobalData
-        - UserStats
+        - ContractStats
+        - DailyAddressStats
+        - AddressTracker
       abis:
         - name: Bridgehub
           file: ./abis/Bridgehub.json
       eventHandlers:
-        - event: BridgehubDepositInitiated(indexed uint256,indexed bytes32,indexed address,address,address,uint256)
-          handler: handleDepositBridgehub
-        - event: WithdrawalFinalizedSharedBridge(indexed uint256,indexed address,indexed address,uint256)
-          handler: handleWithdrawalBridgehub
+        - event: BuyTicket(indexed address,uint256)
+          handler: handleBuyTicket
+        - event: CancelTicket(indexed address,uint256)
+          handler: handleCancelTicket
+        - event: CreateOrder(indexed address,indexed bytes32,(address,bytes32,uint256,uint256,bytes32,uint256,uint256,uint256,uint256,uint256,uint256,uint256))
+          handler: handleCreateOrder
+        - event: DepositFund(indexed address,uint256)
+          handler: handleDepositFund
+        - event: WithdrawFund(indexed address,uint256)
+          handler: handleWithdrawFund
+        - event: SettleOrder(indexed address,indexed bytes32,uint256)
+          handler: handleSettleOrder
       file: ./src/bridgehub.ts
