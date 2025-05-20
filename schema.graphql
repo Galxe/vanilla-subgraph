@@ -1,13 +1,13 @@
-# 全量指标
+# Full quantity index
 type ContractStats @entity(immutable: false) {
-  id: ID!                         # 合约地址
-  totalAddresses: BigInt!        # 累计交互地址数
-  totalTxCount: BigInt!          # 累计交易笔数
-  totalVolume: BigDecimal!       # 累计交易金额
-  updatedAt: BigInt!             # 最后更新块时间
+  id: ID!                        
+  totalAddresses: BigInt!        
+  totalTxCount: BigInt!        
+  totalVolume: BigDecimal!       
+  updatedAt: BigInt!             
 }
 
-# 按日期过滤
+# Filter by date
 type DailyAddressStats @entity(immutable: false) {
   id: ID!
   contract: String!
@@ -17,9 +17,12 @@ type DailyAddressStats @entity(immutable: false) {
   volume: BigDecimal!
 }
 
-# 地址跟踪
 type AddressTracker @entity(immutable: false) {
-  id: ID!  # 格式: "{contract}-{address}"
+  id: ID!  #
   contract: String!
   address: String!
+}
+
+type TransactionTracker @entity(immutable: false) {
+  id: ID!      #
 }

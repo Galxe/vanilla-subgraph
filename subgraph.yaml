@@ -20,6 +20,7 @@ dataSources:
         - ContractStats
         - DailyAddressStats
         - AddressTracker
+        - TransactionTracker
       abis:
         - name: Bridgehub
           file: ./abis/Bridgehub.json
@@ -30,10 +31,24 @@ dataSources:
           handler: handleCancelTicket
         - event: CreateOrder(indexed address,indexed bytes32,(address,bytes32,uint256,uint256,bytes32,uint256,uint256,uint256,uint256,uint256,uint256,uint256))
           handler: handleCreateOrder
+        - event: DailySignIn(indexed address,uint256)
+          handler: handleDailySignIn
         - event: DepositFund(indexed address,uint256)
           handler: handleDepositFund
-        - event: WithdrawFund(indexed address,uint256)
-          handler: handleWithdrawFund
+        - event: PlatformCollectFee(indexed address,indexed uint256)
+          handler: handlePlatformCollectFee
+        - event: ProfitSharingCollectFee(indexed address,indexed uint256)
+          handler: handleProfitSharingCollectFee
+        - event: RoleAdminChanged(indexed bytes32,indexed bytes32,indexed bytes32)
+          handler: handleRoleAdminChanged
+        - event: RoleGranted(indexed bytes32,indexed address,indexed address)
+          handler: handleRoleGranted
+        - event: RoleRevoked(indexed bytes32,indexed address,indexed address)
+          handler: handleRoleRevoked
         - event: SettleOrder(indexed address,indexed bytes32,uint256)
           handler: handleSettleOrder
+        - event: UpdateSlot0(indexed address,indexed address)
+          handler: handleUpdateSlot0
+        - event: WithdrawFund(indexed address,uint256)
+          handler: handleWithdrawFund
       file: ./src/bridgehub.ts

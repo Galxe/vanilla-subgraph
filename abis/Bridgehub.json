@@ -4,11 +4,13 @@
     "inputs": [
       {
         "indexed": true,
+        "internalType": "address",
         "name": "account",
         "type": "address"
       },
       {
         "indexed": false,
+        "internalType": "uint256",
         "name": "amount",
         "type": "uint256"
       }
@@ -21,11 +23,13 @@
     "inputs": [
       {
         "indexed": true,
+        "internalType": "address",
         "name": "account",
         "type": "address"
       },
       {
         "indexed": false,
+        "internalType": "uint256",
         "name": "amount",
         "type": "uint256"
       }
@@ -38,66 +42,33 @@
     "inputs": [
       {
         "indexed": true,
+        "internalType": "address",
         "name": "account",
         "type": "address"
       },
       {
         "indexed": true,
+        "internalType": "bytes32",
         "name": "orderId",
         "type": "bytes32"
       },
       {
         "components": [
-          {
-            "name": "account",
-            "type": "address"
-          },
-          {
-            "name": "orderId",
-            "type": "bytes32"
-          },
-          {
-            "name": "amount",
-            "type": "uint256"
-          },
-          {
-            "name": "fee",
-            "type": "uint256"
-          },
-          {
-            "name": "quote_currency",
-            "type": "bytes32"
-          },
-          {
-            "name": "delivery_type",
-            "type": "uint256"
-          },
-          {
-            "name": "position_type",
-            "type": "uint256"
-          },
-          {
-            "name": "quantity",
-            "type": "uint256"
-          },
-          {
-            "name": "delivery",
-            "type": "uint256"
-          },
-          {
-            "name": "strike_price",
-            "type": "uint256"
-          },
-          {
-            "name": "sheet",
-            "type": "uint256"
-          },
-          {
-            "name": "created_at",
-            "type": "uint256"
-          }
+          { "internalType": "address", "name": "account", "type": "address" },
+          { "internalType": "bytes32", "name": "orderId", "type": "bytes32" },
+          { "internalType": "uint256", "name": "amount", "type": "uint256" },
+          { "internalType": "uint256", "name": "fee", "type": "uint256" },
+          { "internalType": "bytes32", "name": "quote_currency", "type": "bytes32" },
+          { "internalType": "uint256", "name": "delivery_type", "type": "uint256" },
+          { "internalType": "uint256", "name": "position_type", "type": "uint256" },
+          { "internalType": "uint256", "name": "quantity", "type": "uint256" },
+          { "internalType": "uint256", "name": "delivery", "type": "uint256" },
+          { "internalType": "uint256", "name": "strike_price", "type": "uint256" },
+          { "internalType": "uint256", "name": "sheet", "type": "uint256" },
+          { "internalType": "uint256", "name": "created_at", "type": "uint256" }
         ],
         "indexed": false,
+        "internalType": "struct IVanillaMoneyVault.CreateOrderParams",
         "name": "params",
         "type": "tuple"
       }
@@ -110,11 +81,32 @@
     "inputs": [
       {
         "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "DailySignIn",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
         "name": "account",
         "type": "address"
       },
       {
         "indexed": false,
+        "internalType": "uint256",
         "name": "amount",
         "type": "uint256"
       }
@@ -127,16 +119,18 @@
     "inputs": [
       {
         "indexed": true,
-        "name": "account",
+        "internalType": "address",
+        "name": "platformFeeAccount",
         "type": "address"
       },
       {
-        "indexed": false,
+        "indexed": true,
+        "internalType": "uint256",
         "name": "amount",
         "type": "uint256"
       }
     ],
-    "name": "WithdrawFund",
+    "name": "PlatformCollectFee",
     "type": "event"
   },
   {
@@ -144,21 +138,156 @@
     "inputs": [
       {
         "indexed": true,
+        "internalType": "address",
+        "name": "profitSharingAccount",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "ProfitSharingCollectFee",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "previousAdminRole",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "newAdminRole",
+        "type": "bytes32"
+      }
+    ],
+    "name": "RoleAdminChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
         "name": "account",
         "type": "address"
       },
       {
         "indexed": true,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      }
+    ],
+    "name": "RoleGranted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      }
+    ],
+    "name": "RoleRevoked",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
         "name": "orderId",
         "type": "bytes32"
       },
       {
         "indexed": false,
+        "internalType": "uint256",
         "name": "revenue",
         "type": "uint256"
       }
     ],
     "name": "SettleOrder",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "platformFeeAccount",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "profitSharingAccount",
+        "type": "address"
+      }
+    ],
+    "name": "UpdateSlot0",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "WithdrawFund",
     "type": "event"
   }
 ]
