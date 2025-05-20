@@ -5,9 +5,16 @@ import {
   CreateOrder,
   DepositFund,
   WithdrawFund,
-  SettleOrder
+  SettleOrder,
+  DailySignIn,
+  PlatformCollectFee,
+  ProfitSharingCollectFee,
+  RoleAdminChanged,
+  RoleGranted,
+  RoleRevoked,
+  UpdateSlot0
 } from "../generated/Bridgehub/Bridgehub"
-import { ContractStats, DailyAddressStats, AddressTracker } from "../generated/schema"
+import { ContractStats, DailyAddressStats, AddressTracker, TransactionTracker } from "../generated/schema"
 
 // Constants
 const CONTRACT_ADDRESS = "0x994b9a6c85e89c42ea7cc14d42afdf2ea68b72f1"
@@ -52,11 +59,22 @@ function getDayTimestamp(timestamp: BigInt): BigInt {
 function recordTransaction(
   address: string,
   amount: BigDecimal,
-  timestamp: BigInt
+  timestamp: BigInt,
+  txHash: string
 ): void {
+  let isNewTx = false
+  let txTracker = TransactionTracker.load(txHash)
+  if (txTracker == null) {
+    txTracker = new TransactionTracker(txHash)
+    txTracker.save()
+    isNewTx = true
+  }
   // Update contract global statistics
   let contractStats = getOrCreateContractStats()
-  contractStats.totalTxCount = contractStats.totalTxCount.plus(BigInt.fromI32(1))
+
+  if (isNewTx) {
+    contractStats.totalTxCount = contractStats.totalTxCount.plus(BigInt.fromI32(1))
+  }
   contractStats.totalVolume = contractStats.totalVolume.plus(amount)
   contractStats.updatedAt = timestamp
 
@@ -88,7 +106,8 @@ export function handleBuyTicket(event: BuyTicket): void {
   recordTransaction(
     event.params.account.toHexString(),
     amount,
-    event.block.timestamp
+    event.block.timestamp,
+    event.transaction.hash.toHexString()
   )
 }
 
@@ -100,7 +119,8 @@ export function handleCancelTicket(event: CancelTicket): void {
   recordTransaction(
     event.params.account.toHexString(),
     amount,
-    event.block.timestamp
+    event.block.timestamp,
+    event.transaction.hash.toHexString()
   )
 }
 
@@ -112,7 +132,8 @@ export function handleCreateOrder(event: CreateOrder): void {
   recordTransaction(
     event.params.account.toHexString(),
     amount,
-    event.block.timestamp
+    event.block.timestamp,
+    event.transaction.hash.toHexString()
   )
 }
 
@@ -124,7 +145,8 @@ export function handleDepositFund(event: DepositFund): void {
   recordTransaction(
     event.params.account.toHexString(),
     amount,
-    event.block.timestamp
+    event.block.timestamp,
+    event.transaction.hash.toHexString()
   )
 }
 
@@ -136,7 +158,8 @@ export function handleWithdrawFund(event: WithdrawFund): void {
   recordTransaction(
     event.params.account.toHexString(),
     amount,
-    event.block.timestamp
+    event.block.timestamp,
+    event.transaction.hash.toHexString()
   )
 }
 
@@ -148,6 +171,89 @@ export function handleSettleOrder(event: SettleOrder): void {
   recordTransaction(
     event.params.account.toHexString(),
     amount,
-    event.block.timestamp
+    event.block.timestamp,
+    event.transaction.hash.toHexString()
+  )
+}
+
+// Handle DailySignIn event
+export function handleDailySignIn(event: DailySignIn): void {
+  let zero = BigDecimal.zero()
+  recordTransaction(
+    event.params.user.toHexString(),
+    zero,
+    event.block.timestamp,
+    event.transaction.hash.toHexString()
+  )
+}
+
+// Handle PlatformCollectFee event
+export function handlePlatformCollectFee(event: PlatformCollectFee): void {
+  let amount = event.params.amount.toBigDecimal()
+  amount = amount.div(BigDecimal.fromString('1000000000000000000'))
+  
+  recordTransaction(
+    event.params.platformFeeAccount.toHexString(),
+    amount,
+    event.block.timestamp,
+    event.transaction.hash.toHexString()
+  )
+
+}
+
+// Handle ProfitSharingCollectFee event
+export function handleProfitSharingCollectFee(event: ProfitSharingCollectFee): void {
+  let amount = event.params.amount.toBigDecimal()
+  amount = amount.div(BigDecimal.fromString('1000000000000000000'))
+  
+  recordTransaction(
+    event.params.profitSharingAccount.toHexString(),
+    amount,
+    event.block.timestamp,
+    event.transaction.hash.toHexString()
+  )
+}
+
+// Handle RoleAdminChanged event
+export function handleRoleAdminChanged(event: RoleAdminChanged): void {
+  let zero = BigDecimal.zero()
+  recordTransaction(
+    event.params.previousAdminRole.toHexString(), 
+    zero,
+    event.block.timestamp,
+    event.transaction.hash.toHexString()
+  )
+}
+
+// Handle RoleGranted event
+export function handleRoleGranted(event: RoleGranted): void {
+  let zero = BigDecimal.zero()
+  recordTransaction(
+    event.params.account.toHexString(),
+    zero,
+    event.block.timestamp,
+    event.transaction.hash.toHexString()
+  )
+}
+
+// Handle RoleRevoked event
+export function handleRoleRevoked(event: RoleRevoked): void {
+  let zero = BigDecimal.zero()
+  recordTransaction(
+    event.params.account.toHexString(),
+    zero,
+    event.block.timestamp,
+    event.transaction.hash.toHexString()
+  )
+}
+
+// Handle UpdateSlot0 event
+export function handleUpdateSlot0(event: UpdateSlot0): void {
+  let zero = BigDecimal.zero()
+  recordTransaction(
+    event.params.profitSharingAccount.toHexString(),
+    zero,
+    event.block.timestamp,
+    event.transaction.hash.toHexString()
   )
 }
