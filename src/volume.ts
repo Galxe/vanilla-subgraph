@@ -13,7 +13,7 @@ import {
   RoleGranted,
   RoleRevoked,
   UpdateSlot0
-} from "../generated/Bridgehub/Bridgehub"
+} from "../generated/Volume/Volume"
 import { ContractStats, DailyAddressStats, AddressTracker, TransactionTracker } from "../generated/schema"
 
 // Constants
@@ -58,7 +58,7 @@ function getDayTimestamp(timestamp: BigInt): BigInt {
 // Record transaction
 function recordTransaction(
   address: string,
-  amount: BigDecimal,
+  volume: BigDecimal,
   timestamp: BigInt,
   txHash: string
 ): void {
@@ -75,7 +75,7 @@ function recordTransaction(
   if (isNewTx) {
     contractStats.totalTxCount = contractStats.totalTxCount.plus(BigInt.fromI32(1))
   }
-  contractStats.totalVolume = contractStats.totalVolume.plus(amount)
+  contractStats.totalVolume = contractStats.totalVolume.plus(volume)
   contractStats.updatedAt = timestamp
 
   // Check if this is a new address
@@ -94,18 +94,16 @@ function recordTransaction(
   let date = getDayTimestamp(timestamp)
   let dailyStats = getOrCreateDailyAddressStats(address, date)
   dailyStats.txCount = dailyStats.txCount.plus(BigInt.fromI32(1))
-  dailyStats.volume = dailyStats.volume.plus(amount)
+  dailyStats.volume = dailyStats.volume.plus(volume)
   dailyStats.save()
 }
 
 // Handle buy ticket event
 export function handleBuyTicket(event: BuyTicket): void {
-  let amount = event.params.amount.toBigDecimal()
-  amount = amount.div(BigDecimal.fromString('1000000000000000000'))
   
   recordTransaction(
     event.params.account.toHexString(),
-    amount,
+    BigDecimal.zero(),
     event.block.timestamp,
     event.transaction.hash.toHexString()
   )
@@ -113,25 +111,31 @@ export function handleBuyTicket(event: BuyTicket): void {
 
 // Handle cancel ticket event
 export function handleCancelTicket(event: CancelTicket): void {
-  let amount = event.params.amount.toBigDecimal()
-  amount = amount.div(BigDecimal.fromString('1000000000000000000'))
   
   recordTransaction(
     event.params.account.toHexString(),
-    amount,
+    BigDecimal.zero(),
     event.block.timestamp,
     event.transaction.hash.toHexString()
   )
 }
 
+function toBD(n: BigInt): BigDecimal {  
+  return n.toBigDecimal()  
+           .div(BigDecimal.fromString('1000000000000000000'))  
+}
+
 // Handle create order event
 export function handleCreateOrder(event: CreateOrder): void {
-  let amount = event.params.params.amount.toBigDecimal()
-  amount = amount.div(BigDecimal.fromString('1000000000000000000'))
-  
+  let p = event.params.params
+
+  let quantity = toBD(p.quantity)            
+  let price    = toBD(p.strike_price)        
+  let volume   = quantity.times(price)     
+
   recordTransaction(
     event.params.account.toHexString(),
-    amount,
+    volume,
     event.block.timestamp,
     event.transaction.hash.toHexString()
   )
@@ -139,12 +143,9 @@ export function handleCreateOrder(event: CreateOrder): void {
 
 // Handle deposit fund event
 export function handleDepositFund(event: DepositFund): void {
-  let amount = event.params.amount.toBigDecimal()
-  amount = amount.div(BigDecimal.fromString('1000000000000000000'))
-  
   recordTransaction(
     event.params.account.toHexString(),
-    amount,
+    BigDecimal.zero(),
     event.block.timestamp,
     event.transaction.hash.toHexString()
   )
@@ -152,12 +153,10 @@ export function handleDepositFund(event: DepositFund): void {
 
 // Handle withdraw fund event
 export function handleWithdrawFund(event: WithdrawFund): void {
-  let amount = event.params.amount.toBigDecimal()
-  amount = amount.div(BigDecimal.fromString('1000000000000000000'))
   
   recordTransaction(
     event.params.account.toHexString(),
-    amount,
+    BigDecimal.zero(),
     event.block.timestamp,
     event.transaction.hash.toHexString()
   )
@@ -165,12 +164,9 @@ export function handleWithdrawFund(event: WithdrawFund): void {
 
 // Handle settle order event
 export function handleSettleOrder(event: SettleOrder): void {
-  let amount = event.params.revenue.toBigDecimal()
-  amount = amount.div(BigDecimal.fromString('1000000000000000000'))
-  
   recordTransaction(
     event.params.account.toHexString(),
-    amount,
+    BigDecimal.zero(),
     event.block.timestamp,
     event.transaction.hash.toHexString()
   )
@@ -189,12 +185,9 @@ export function handleDailySignIn(event: DailySignIn): void {
 
 // Handle PlatformCollectFee event
 export function handlePlatformCollectFee(event: PlatformCollectFee): void {
-  let amount = event.params.amount.toBigDecimal()
-  amount = amount.div(BigDecimal.fromString('1000000000000000000'))
-  
   recordTransaction(
     event.params.platformFeeAccount.toHexString(),
-    amount,
+    BigDecimal.zero(),
     event.block.timestamp,
     event.transaction.hash.toHexString()
   )
@@ -203,12 +196,10 @@ export function handlePlatformCollectFee(event: PlatformCollectFee): void {
 
 // Handle ProfitSharingCollectFee event
 export function handleProfitSharingCollectFee(event: ProfitSharingCollectFee): void {
-  let amount = event.params.amount.toBigDecimal()
-  amount = amount.div(BigDecimal.fromString('1000000000000000000'))
   
   recordTransaction(
     event.params.profitSharingAccount.toHexString(),
-    amount,
+    BigDecimal.zero(),
     event.block.timestamp,
     event.transaction.hash.toHexString()
   )
