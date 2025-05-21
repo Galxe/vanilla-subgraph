@@ -14,17 +14,43 @@ import {
   RoleRevoked,
   UpdateSlot0
 } from "../generated/Volume/Volume"
-import { ContractStats, DailyAddressStats, AddressTracker, TransactionTracker } from "../generated/schema"
+import { ContractStats,ContractStatsByAddress, DailyAddressStats, AddressTracker, TransactionTracker, DailyContractStats } from "../generated/schema"
 
 // Constants
 const CONTRACT_ADDRESS = "0x994b9a6c85e89c42ea7cc14d42afdf2ea68b72f1"
 
-// Get or create contract statistics
 function getOrCreateContractStats(): ContractStats {
   let stats = ContractStats.load(CONTRACT_ADDRESS)
   if (stats == null) {
     stats = new ContractStats(CONTRACT_ADDRESS)
     stats.totalAddresses = BigInt.zero()
+    stats.totalTxCount = BigInt.zero()
+    stats.totalVolume = BigDecimal.zero()
+    stats.updatedAt = BigInt.zero()
+  }
+  return stats
+}
+
+// Get or create contract statistics
+function getOrCreateDailyContractStats(date: BigInt): DailyContractStats {
+  let id = `${CONTRACT_ADDRESS}-${date.toString()}`
+  let stats = DailyContractStats.load(id)
+  if (stats == null) {
+    stats = new DailyContractStats(id)
+    stats.totalAddresses = BigInt.zero()
+    stats.totalTxCount = BigInt.zero()
+    stats.totalVolume = BigDecimal.zero()
+    stats.date = date
+  }
+  return stats
+}
+
+function getOrCreateContractStatsByAddress(address: string): ContractStatsByAddress {
+  let id = `${CONTRACT_ADDRESS}-${address}`
+  let stats = ContractStatsByAddress.load(id)
+  if (stats == null) {
+    stats = new ContractStatsByAddress(id)
+    stats.address = address
     stats.totalTxCount = BigInt.zero()
     stats.totalVolume = BigDecimal.zero()
     stats.updatedAt = BigInt.zero()
@@ -69,12 +95,23 @@ function recordTransaction(
     txTracker.save()
     isNewTx = true
   }
-  // Update contract global statistics
+
+  // Get date timestamp
+  let date = getDayTimestamp(timestamp)
+  
+  // Update daily contract statistics
   let contractStats = getOrCreateContractStats()
+  let daidycontractStats = getOrCreateDailyContractStats(date)
+  let addressStats = getOrCreateContractStatsByAddress(address)
 
   if (isNewTx) {
+    daidycontractStats.totalTxCount = daidycontractStats.totalTxCount.plus(BigInt.fromI32(1))
+    addressStats.totalTxCount = addressStats.totalTxCount.plus(BigInt.fromI32(1))
     contractStats.totalTxCount = contractStats.totalTxCount.plus(BigInt.fromI32(1))
   }
+  
+  daidycontractStats.totalVolume = daidycontractStats.totalVolume.plus(volume)
+  addressStats.totalVolume = addressStats.totalVolume.plus(volume)
   contractStats.totalVolume = contractStats.totalVolume.plus(volume)
   contractStats.updatedAt = timestamp
 
@@ -82,16 +119,19 @@ function recordTransaction(
   let addressKey = `${CONTRACT_ADDRESS}-${address}`
   let existingAddress = AddressTracker.load(addressKey)
   if (existingAddress == null) {
+    daidycontractStats.totalAddresses = daidycontractStats.totalAddresses.plus(BigInt.fromI32(1))
     contractStats.totalAddresses = contractStats.totalAddresses.plus(BigInt.fromI32(1))
     let newAddress = new AddressTracker(addressKey)
     newAddress.contract = CONTRACT_ADDRESS
     newAddress.address = address
     newAddress.save()
   }
+
+  daidycontractStats.save()
+  addressStats.save()
   contractStats.save()
 
   // Update daily address statistics
-  let date = getDayTimestamp(timestamp)
   let dailyStats = getOrCreateDailyAddressStats(address, date)
   dailyStats.txCount = dailyStats.txCount.plus(BigInt.fromI32(1))
   dailyStats.volume = dailyStats.volume.plus(volume)
@@ -125,13 +165,18 @@ function toBD(n: BigInt): BigDecimal {
            .div(BigDecimal.fromString('1000000000000000000'))  
 }
 
+function toBDNoScale(n: BigInt): BigDecimal {
+  return n.toBigDecimal()
+}
+
 // Handle create order event
 export function handleCreateOrder(event: CreateOrder): void {
   let p = event.params.params
 
   let quantity = toBD(p.quantity)            
-  let price    = toBD(p.strike_price)        
-  let volume   = quantity.times(price)     
+  let price    = toBD(p.strike_price)   
+  let sheet    = toBDNoScale(p.sheet)  
+  let volume   = quantity.times(price).times(sheet)     
 
   recordTransaction(
     event.params.account.toHexString(),
@@ -171,6 +216,7 @@ export function handleSettleOrder(event: SettleOrder): void {
     event.transaction.hash.toHexString()
   )
 }
+
 
 // Handle DailySignIn event
 export function handleDailySignIn(event: DailySignIn): void {

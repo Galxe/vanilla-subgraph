@@ -3,6 +3,22 @@ type ContractStats @entity(immutable: false) {
   id: ID!                        
   totalAddresses: BigInt!        
   totalTxCount: BigInt!        
+  totalVolume: BigDecimal!  
+  updatedAt: BigInt!       
+}
+
+type DailyContractStats @entity(immutable: false) {
+  id: ID!                        
+  totalAddresses: BigInt!        
+  totalTxCount: BigInt!        
+  totalVolume: BigDecimal!  
+  date: BigInt!   @index        
+}
+
+type ContractStatsByAddress @entity(immutable: false) {
+  id: ID!    
+  address: String! @index
+  totalTxCount: BigInt! 
   totalVolume: BigDecimal!       
   updatedAt: BigInt!             
 }

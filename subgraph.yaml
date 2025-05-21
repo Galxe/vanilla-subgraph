@@ -18,6 +18,8 @@ dataSources:
       language: wasm/assemblyscript
       entities:
         - ContractStats
+        - DailyContractStats
+        - ContractStatsByAddress
         - DailyAddressStats
         - AddressTracker
         - TransactionTracker
