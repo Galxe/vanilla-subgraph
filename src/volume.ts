@@ -133,7 +133,9 @@ function recordTransaction(
 
   // Update daily address statistics
   let dailyStats = getOrCreateDailyAddressStats(address, date)
-  dailyStats.txCount = dailyStats.txCount.plus(BigInt.fromI32(1))
+  if (isNewTx) {
+    dailyStats.txCount = dailyStats.txCount.plus(BigInt.fromI32(1))
+  }
   dailyStats.volume = dailyStats.volume.plus(volume)
   dailyStats.save()
 }
