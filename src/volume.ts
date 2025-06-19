@@ -63,7 +63,7 @@ function getOrCreateDailyAddressStats(
   address: string,
   date: BigInt
 ): DailyAddressStats {
-  let id = `${CONTRACT_ADDRESS}-${address}-${date.toString()}`
+  let id = `${CONTRACT_ADDRESS}-${date.toString()}-${address}`
   let stats = DailyAddressStats.load(id)
   if (stats == null) {
     stats = new DailyAddressStats(id)
